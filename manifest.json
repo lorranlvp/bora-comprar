@@ -1,0 +1,22 @@
+{
+  "name": "Bora Comprar",
+  "short_name": "Bora Comprar",
+  "description": "Lista de compras inteligente integrada ao Google Sheets",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#F8FAFC",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://lh3.googleusercontent.com/d/1MuC92zVngc48Wm9XzqRWErIS8CyT3fLp=s192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://lh3.googleusercontent.com/d/1MuC92zVngc48Wm9XzqRWErIS8CyT3fLp=s512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
