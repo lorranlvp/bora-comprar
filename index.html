@@ -120,6 +120,7 @@ summary{font-size:.88rem;font-weight:600;cursor:pointer}
     </div>
     <div class="hl"><span id="dot" class="dot"></span><button id="btnAdd" class="ib hidden" data-a="itemNew">＋</button></div>
   </header>
+  <div id="err" class="hidden" style="margin:0 20px 8px;padding:10px 12px;border-radius:12px;background:#FEF2F2;color:#B91C1C;font-size:.78rem;font-weight:600"></div>
   <main>
     <section id="v_home">
       <div class="grid2">
@@ -170,7 +171,7 @@ const API_URL="https://script.google.com/macros/s/AKfycbz9WGC54ZvPIvsviO_6ACZMFD
 const PK="bora_comprar_auth_pin",SK="bora_comprar_state_v3";
 const ICONS={package:'📦',apple:'🍎',beef:'🥩',cheese:'🧀',croissant:'🥐',cup:'🥤',flame:'🌶️',can:'🥫',wheat:'🌾',candy:'🍫',snowflake:'❄️',sparkles:'✨',heart:'🧴',box:'🛍️',cart:'🛒',leaf:'🥬',fish:'🐟',coffee:'☕',baby:'🍼',pet:'🐾',pill:'💊',home:'🏠',star:'⭐',tag:'🏷️'};
 const VARIANTS={feijao:[['Feijão','Não Perecíveis'],['Feijão Preto','Não Perecíveis'],['Feijão Vermelho','Não Perecíveis'],['Feijão Carioca (Marrom)','Não Perecíveis']],arroz:[['Arroz','Não Perecíveis'],['Arroz japa','Não Perecíveis'],['Arroz Integral','Não Perecíveis']],queijo:[['Queijo','Frios'],['Parmesão','Frios'],['Requeijão','Frios'],['Creme de Ricota','Frios']]};
-const S={cats:[],items:{},view:'home',mode:null,cat:null,edit:false,all:false,q:'',hist:null,ai:null,ed:null,cmp:[{p:'',q:'',u:'g'},{p:'',q:'',u:'g'}],market:''};
+const S={cats:[],items:{},view:'home',mode:null,cat:null,edit:false,all:false,q:'',hist:null,ai:null,ed:null,cmp:[{p:'',q:'',u:'g'},{p:'',q:'',u:'g'}],market:'',parts:{}};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
@@ -182,6 +183,11 @@ const needed=i=>(Number(i.listQty)>0||i.ifCheap)&&!i.inCart;
 const ctx=el=>{const c=el.closest('[data-n]');return c&&find(c.dataset.c,c.dataset.n)};
 const dd=i=>`data-c="${esc(i.category)}" data-n="${esc(i.name)}"`;
 const fd=s=>{const[a,b]=String(s).split(' ');const[y,m,d]=a.split('-');return`${d}/${m}/${y}`+(b?' '+b:'')};
+const num=s=>{const v=parseFloat(String(s||'').replace(/\./g,'').replace(',','.'));return isNaN(v)?0:v};
+const fnum=(v,d)=>v>0?(d?Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}):String(Math.round(v))):'';
+const dq=(i,q)=>(i.unit==='kg'||(q>0&&q%1))?3:0;
+const MI='type="text" inputmode="numeric"';
+function mask(el){const d0=Number(el.dataset.dec);let d=el.value.replace(/\D/g,'').replace(/^0+/,'');if(!d){el.value='';return}if(!d0){el.value=d;return}d=d.padStart(d0+1,'0');el.value=d.slice(0,-d0).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+','+d.slice(-d0)}
 
 /* ---------- REDE / SINCRONIZAÇÃO ---------- */
 let pend=0,chain=Promise.resolve(),ver='',tick=0;
@@ -193,9 +199,13 @@ function post(payload){
   return p;
 }
 async function get(action){
-  const j=await(await fetch(`${API_URL}?action=${action}&pin=${encodeURIComponent(pin())}`)).json();
-  if(j.authError){logout();throw 0}return j;
+  const r=await fetch(`${API_URL}?action=${action}&pin=${encodeURIComponent(pin())}`);
+  let j;try{j=await r.json()}catch(e){throw new Error('resposta inválida do servidor')}
+  if(j.authError){logout();throw 0}
+  if(!j.ok)throw new Error(j.error||'erro');
+  return j;
 }
+const showErr=m=>{const e=$('err');e.textContent=m;e.classList.toggle('hidden',!m)};
 function logout(){localStorage.removeItem(PK);showLogin(true)}
 function showLogin(err){$('login').classList.remove('hidden');$('loginErr').classList.toggle('hidden',!err);setTimeout(()=>$('pinInput').focus(),100)}
 async function submitLogin(){
@@ -212,13 +222,15 @@ function apply(d){S.cats=(d.categories||[]);S.items=d.itemsByCategory||{};persis
 const typing=()=>['INPUT','SELECT','TEXTAREA'].includes((document.activeElement||{}).tagName)||!$('modal').classList.contains('hidden');
 async function poll(force){
   if(!pin()||document.hidden||pend||(!force&&typing()))return;
+  let v=null,old=false;
+  try{v=(await get('version')).v}catch(e){if(e===0)return;old=true}
+  if(!old&&!force&&v===ver){showErr('');return}
   try{
-    const r=await get('version');
-    if(force||r.v!==ver){
-      const d=await get('getData');
-      if(!pend&&(force||!typing())){apply(d.data);ver=r.v}
-    }
-  }catch(e){}
+    const d=await get('getData');
+    if(pend||(!force&&typing()))return;
+    apply(d.data);ver=v;
+    showErr(old?'⚠️ Servidor desatualizado: refaça a implantação do Apps Script (Nova versão). Sincronização rápida e novos recursos não vão funcionar.':'');
+  }catch(e){if(e!==0)showErr('Sem conexão com a planilha: '+(e.message||e))}
 }
 // no mercado: a cada 3s; fora dele: a cada ~15s
 setInterval(()=>{tick++;if(S.mode==='buy'||tick%5===0)poll()},3000);
@@ -264,10 +276,10 @@ function buyCard(i){
   const on=needed(i)||i.inCart;
   return`<div class="item ${i.inCart?'cart':(needed(i)?'':'dim')}" ${dd(i)}>
   <div class="row"><div class="tg"><b>${esc(i.name)}</b><span class="tag">${kg?'kg':'un'}</span>${i.ifCheap?'<span class="cheapb">Se barato</span>':''}${i.ignore?'<span class="ignb">Próxima compra</span>':''}</div>${i.listQty>0?`<span class="req">Ped: ${i.listQty} ${i.unit}</span>`:''}</div>
-  <div class="bc"><div class="fm"><label>${kg?'Peso (kg)':'Qtd pega'}</label><input type="number" inputmode="decimal" step="any" data-f="qty" placeholder="${i.listQty||1}" value="${q}"></div>
-  <div class="fm"><label>${kg?'R$ / kg':'R$ unit.'}</label><input type="number" inputmode="decimal" step="0.01" data-f="price" placeholder="0,00" value="${p}"></div>
+  <div class="bc"><div class="fm"><label>${kg?'Peso (kg)':'Qtd pega'}</label><input ${MI} data-dec="${dq(i,q)}" data-f="qty" placeholder="${i.listQty||1}" value="${fnum(q,dq(i,q))}"></div>
+  <div class="fm"><label>${kg?'R$ / kg':'R$ unit.'}</label><input ${MI} data-dec="2" data-f="price" placeholder="0,00" value="${fnum(p,2)}"></div>
   <button class="chk ${i.inCart?'on':''}" data-a="check">✓</button></div>
-  <div class="acts">${needed(i)?`<button class="${i.ignore?'on':''}" data-a="ign">${i.ignore?'↩ Voltar p/ compra':'⏭ Ignorar nessa compra'}</button>`:''}${on?'<button data-a="rm">✕ Tirar da lista</button>':''}<button data-a="itemEd">✎ Editar/mover</button><button data-a="price">🕘 Preço anterior</button></div></div>`;
+  <div class="acts">${needed(i)?`<button class="${i.ignore?'on':''}" data-a="ign">${i.ignore?'↩ Voltar p/ compra':'⏭ Ignorar nessa compra'}</button>`:''}${on?'<button data-a="rm">✕ Tirar da lista</button>':''}<button data-a="itemEd">✎ Editar/mover</button><button data-a="price">🕘 Preço anterior</button>${kg?'<button data-a="sum">⚖️ Somar embalagens</button>':''}</div></div>`;
 }
 function rBody(){
   const buy=S.mode==='buy',b=$('catsBody'),q=norm(S.q);
@@ -316,10 +328,11 @@ function priceInfo(name){
 }
 
 /* ---------- COMPARADOR ---------- */
+const CD={g:0,kg:3,ml:0,L:3,un:0};
 const F={g:1,kg:1000,ml:1,L:1000,un:1},FAM={g:'w',kg:'w',ml:'v',L:'v',un:'u'},LBL={w:'kg',v:'L',u:'un'};
 function cmpModal(){
   modal(`<div class="mt">⚖️ Comparar preço × quantidade<button class="ib" data-a="close">✕</button></div>
-  <div id="cmpRows" class="list">${S.cmp.map((r,k)=>`<div class="cmp"><b>${'ABCD'[k]}</b><input type="number" inputmode="decimal" step="any" placeholder="Preço R$" value="${r.p}" data-f="cmp" data-k="p" data-i="${k}"><input type="number" inputmode="decimal" step="any" placeholder="Quantidade" value="${r.q}" data-f="cmp" data-k="q" data-i="${k}"><select data-f="cmp" data-k="u" data-i="${k}">${Object.keys(F).map(u=>`<option ${u===r.u?'selected':''}>${u}</option>`).join('')}</select></div>`).join('')}</div>
+  <div id="cmpRows" class="list">${S.cmp.map((r,k)=>`<div class="cmp"><b>${'ABCD'[k]}</b><input ${MI} data-dec="2" placeholder="Preço R$" value="${r.p}" data-f="cmp" data-k="p" data-i="${k}"><input ${MI} data-dec="${CD[r.u]}" placeholder="Quantidade" value="${r.q}" data-f="cmp" data-k="q" data-i="${k}"><select data-f="cmp" data-k="u" data-i="${k}">${Object.keys(F).map(u=>`<option ${u===r.u?'selected':''}>${u}</option>`).join('')}</select></div>`).join('')}</div>
   ${S.cmp.length<4?'<button class="btn sec" data-a="cmpAdd">＋ Mais uma opção</button>':''}
   <div id="cmpRes" class="list"></div>
   <div class="cap" style="margin:6px 0 0">Preço anterior de um produto</div>
@@ -328,7 +341,7 @@ function cmpModal(){
   calcCmp();
 }
 function calcCmp(){
-  const rows=S.cmp.map((r,k)=>{const p=parseFloat(r.p),q=parseFloat(r.q);if(!(p>0&&q>0))return null;const f=FAM[r.u];return{k,f,v:p/(q*F[r.u])*(f==='u'?1:1000)}});
+  const rows=S.cmp.map((r,k)=>{const p=num(r.p),q=num(r.q);if(!(p>0&&q>0))return null;const f=FAM[r.u];return{k,f,v:p/(q*F[r.u])*(f==='u'?1:1000)}});
   const ok=rows.filter(Boolean),el=$('cmpRes');
   if(ok.length<2){el.innerHTML='<div class="muted">Preencha preço e quantidade de pelo menos duas opções.</div>';return}
   if(new Set(ok.map(x=>x.f)).size>1){el.innerHTML='<div class="muted" style="color:var(--d)">Unidades incompatíveis (ex: g com ml).</div>';return}
@@ -337,8 +350,17 @@ function calcCmp(){
 }
 
 /* ---------- MODAIS ---------- */
-function modal(h){const m=$('modal');m.innerHTML=`<div class="sheet">${h}</div>`;m.classList.remove('hidden')}
-function closeModal(){$('modal').classList.add('hidden');$('modal').innerHTML=''}
+let skipPop=0;
+const modalOpen=()=>!$('modal').classList.contains('hidden');
+function modal(h){const m=$('modal');if(!modalOpen())history.pushState({m:1},'');m.innerHTML=`<div class="sheet">${h}</div>`;m.classList.remove('hidden')}
+function closeModal(){if(!modalOpen())return;$('modal').classList.add('hidden');$('modal').innerHTML='';skipPop++;history.back()}
+// botão "voltar" do celular: fecha o menu aberto ou volta uma tela (em vez de fechar o app)
+window.addEventListener('popstate',()=>{
+  if(skipPop){skipPop--;return}
+  if(modalOpen()){$('modal').classList.add('hidden');$('modal').innerHTML='';return}
+  if(S.view==='items')S.view='cats';else if(S.view!=='home'){S.view='home';S.mode=null}
+  render();
+});
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
 
 function itemModal(i){
@@ -377,9 +399,9 @@ function finModal(){
 const saveI=i=>post({action:'saveItemState',...i});
 const A={
   close:closeModal,
-  mode(b){S.mode=b.dataset.m;S.view='cats';S.q='';$('q').value='';S.edit=false;S.all=false;if(S.mode==='buy')loadHist();render()},
-  back(){if(S.view==='items')S.view='cats';else{S.view='home';S.mode=null}render()},
-  cat(b){S.cat=b.dataset.cn;S.view='items';render()},
+  mode(b){history.pushState({},'');S.mode=b.dataset.m;S.view='cats';S.q='';$('q').value='';S.edit=false;S.all=false;if(S.mode==='buy')loadHist();render()},
+  back(){history.back()},
+  cat(b){history.pushState({},'');S.cat=b.dataset.cn;S.view='items';render()},
   edit(){S.edit=!S.edit;render()},
   all(){S.all=!S.all;render()},
   catEd(b){catModal(b.dataset.cn||null)},
@@ -419,7 +441,7 @@ const A={
   check(b){
     const i=ctx(b),card=b.closest('.item');
     const q=card.querySelector('[data-f=qty]').value,p=card.querySelector('[data-f=price]').value;
-    if(q!=='')i.cartQty=parseFloat(q);if(p!=='')i.unitPrice=parseFloat(p);
+    if(q!=='')i.cartQty=num(q);if(p!=='')i.unitPrice=num(p);
     i.inCart=!i.inCart;
     if(i.inCart){i.ignore=false;if(!(i.cartQty>0))i.cartQty=i.listQty>0?i.listQty:1}
     saveI(i);render();
@@ -427,14 +449,14 @@ const A={
   ign(b){const i=ctx(b);i.ignore=!i.ignore;saveI(i);render()},
   rm(b){const i=ctx(b);Object.assign(i,{listQty:0,ifCheap:false,inCart:false,cartQty:0,unitPrice:0,ignore:false});saveI(i);render()},
   async price(b){const i=ctx(b);if(!S.hist)await loadHist();modal(`<div class="mt">🕘 ${esc(i.name)}<button class="ib" data-a="close">✕</button></div><div class="list">${priceInfo(i.name)}</div>`)},
-  hist(){S.view='hist';S.mode=null;rHist();render()},
+  hist(){history.pushState({},'');S.view='hist';S.mode=null;rHist();render()},
   cmp(){cmpModal();if(!S.hist)loadHist()},
   cmpAdd(){S.cmp.push({p:'',q:'',u:S.cmp[0].u});cmpModal()},
   fin(){finModal()},
   ign2(b){const i=ctx(b);i.ignore=!i.ignore;saveI(i);S.market=$('market').value;finModal()},
   rm2(b){A.rm(b);S.market=$('market').value;finModal()},
   finOk(){
-    const market=$('market').value.trim()||'Mercado';S.market='';
+    const market=$('market').value.trim()||'Mercado';S.market='';S.parts={};
     const snap=all().map(i=>({...i}));
     all().forEach(i=>{
       if(i.inCart){i.listQty=0;i.ifCheap=false}else if(!i.ignore){i.listQty=0;i.ifCheap=false}
@@ -443,6 +465,10 @@ const A={
     closeModal();render();
     post({action:'finalizePurchase',market,items:snap}).then(()=>{S.hist=null;loadHist()});
   },
+  sum(b){sumModal(ctx(b))},
+  smAdd(){const e=$('smW'),v=num(e.value);if(!(v>0))return;S.sm.parts.push(v);e.value='';smRender();e.focus()},
+  smDel(b){S.sm.parts.splice(Number(b.dataset.i),1);smRender()},
+  smOk(){const s=S.sm,i=s.i,t=smTotal();if(!(t>0))return;S.parts[s.k]=s.parts;i.cartQty=t;i.unitPrice=s.ppk;i.inCart=true;i.ignore=false;saveI(i);closeModal();render()},
   aiStep(b){const e=$('aiQty');let v=parseFloat(e.value||1)+Number(b.dataset.d);if(v<.5)v=.5;e.value=v;S.ai.qty=v},
   aiCheap(){S.ai.cheap=!S.ai.cheap;$('aiCheap').classList.toggle('on',S.ai.cheap)},
   aiOk:aiConfirm,
@@ -455,21 +481,44 @@ function mv(n,d){
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&A[b.dataset.a])A[b.dataset.a](b,e)});
 document.addEventListener('change',e=>{
-  const f=e.target.dataset.f;if(!f||f==='cmp')return;
+  const f=e.target.dataset.f;if(!f)return;
+  if(f==='cmp'){if(e.target.dataset.k==='u'){const x=S.cmp[e.target.dataset.i],o=num(x.q);x.u=e.target.value;x.q=fnum(o,CD[x.u]);cmpModal()}return}
   const i=ctx(e.target);if(!i)return;
   if(f==='plan'){i.listQty=Math.max(0,parseFloat(e.target.value||0));saveI(i);sums()}
   else{
     const c=e.target.closest('.item');
     const q=c.querySelector('[data-f=qty]').value,p=c.querySelector('[data-f=price]').value;
-    i.cartQty=parseFloat(q||0);i.unitPrice=parseFloat(p||0);saveI(i);sums();
+    i.cartQty=num(q);i.unitPrice=num(p);saveI(i);sums();
   }
 });
 document.addEventListener('input',e=>{
   const t=e.target;
+  if(t.dataset.dec!==undefined)mask(t);
   if(t.id==='q'){S.q=t.value;rBody()}
   else if(t.dataset.f==='cmp'){S.cmp[t.dataset.i][t.dataset.k]=t.value;calcCmp()}
   else if(t.id==='cmpName'){$('cmpHist').innerHTML=priceInfo(t.value)}
+  else if(t.id==='smPrice'){S.sm.ppk=num(t.value);smRender()}
 });
+
+/* ---------- SOMAR EMBALAGENS (granel) ---------- */
+const smTotal=()=>Math.round(S.sm.parts.reduce((a,b)=>a+b,0)*1000)/1000;
+function sumModal(i){
+  const k=i.category+'|'+i.name;
+  S.sm={i,k,parts:(S.parts[k]||(i.cartQty>0?[i.cartQty]:[])).slice(),ppk:i.unitPrice||0};
+  modal(`<div class="mt">⚖️ ${esc(i.name)}<button class="ib" data-a="close">✕</button></div>
+  <div class="muted">Digite só os números do peso: 1345 vira 1,345 kg.</div>
+  <div class="fm"><label>R$ / kg</label><input id="smPrice" ${MI} data-dec="2" placeholder="0,00" value="${fnum(S.sm.ppk,2)}"></div>
+  <div class="row"><input id="smW" ${MI} data-dec="3" class="in" placeholder="Peso da embalagem"><button class="btn fit" data-a="smAdd">＋</button></div>
+  <div id="smList" class="list"></div><div id="smTot" class="list"></div>
+  <button class="btn ok" data-a="smOk">Colocar no carrinho</button>`);
+  smRender();
+}
+function smRender(){
+  const s=S.sm,t=smTotal();
+  $('smList').innerHTML=s.parts.map((p,k)=>`<div class="rv"><span>Embalagem ${k+1}</span><span><b>${fnum(p,3)} kg</b> <button class="sm" data-a="smDel" data-i="${k}">✕</button></span></div>`).join('')||'<div class="muted">Adicione o peso de cada embalagem com ＋</div>';
+  $('smTot').innerHTML=`<div class="rv"><b>Peso total</b><b>${fnum(t,3)||'0,000'} kg</b></div><div class="rv"><b>Valor total</b><b class="sv">${brl(t*s.ppk)}</b></div>`;
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='smW')A.smAdd()});
 
 /* ---------- ASSISTENTE RÁPIDO ---------- */
 const CONN=new Set(['de','do','da','dos','das','com','sem','em','para','ao','a','o','e']);
