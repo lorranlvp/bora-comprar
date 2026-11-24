@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bora-comprar-v2';
+const CACHE_NAME = 'my-market-v3';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {

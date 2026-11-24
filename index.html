@@ -6,10 +6,16 @@
 <meta name="theme-color" content="#F8FAFC" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Bora Comprar" />
-<title>Bora Comprar</title>
-<link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1MuC92zVngc48Wm9XzqRWErIS8CyT3fLp=s512" />
-<link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1MuC92zVngc48Wm9XzqRWErIS8CyT3fLp=s512" />
+<meta name="apple-mobile-web-app-title" content="My Market" />
+<title>My Market</title>
+<link id="appFavicon" rel="icon" type="image/png" />
+<link id="appTouchIcon" rel="apple-touch-icon" />
+<script>
+// >>> PARA TROCAR A IMAGEM DO APP: troque só o ID abaixo (o código entre /d/ e /view no link do Google Drive) <<<
+const ICON_ID="1hVlwpIzt5A9XBZQekUwhqFl1AuvZP9gq";
+const ICON=s=>`https://lh3.googleusercontent.com/d/${ICON_ID}=s${s}`;
+document.getElementById('appFavicon').href=ICON(512);document.getElementById('appTouchIcon').href=ICON(512);
+</script>
 <link rel="manifest" href="manifest.json" />
 <style>
 :root{--bg:#F8FAFC;--s:#fff;--s2:#F1F5F9;--b:#E2E8F0;--t:#0F172A;--m:#64748B;--ac:#10B981;--acs:#ECFDF5;--am:#F59E0B;--ams:#FFFBEB;--d:#EF4444;--r:14px;--sh:0 4px 20px -2px rgba(15,23,42,.05)}
@@ -24,7 +30,7 @@ header{position:sticky;top:0;z-index:20;background:rgba(248,250,252,.9);backdrop
 .ttl{font-size:1.05rem;font-weight:700;letter-spacing:-.02em}
 .ib{width:38px;height:38px;border-radius:12px;border:1px solid var(--b);background:var(--s);display:inline-flex;align-items:center;justify-content:center;font-size:1rem}
 .ib.sm{width:28px;height:28px;font-size:.75rem;border-radius:9px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--ac);display:inline-block}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--ac);display:inline-block}
 .dot.sy{background:var(--am);animation:p 1s infinite}
 @keyframes p{50%{opacity:.35}}
 main{padding:8px 20px}
@@ -94,7 +100,7 @@ main{padding:8px 20px}
 .icons{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 .icons div{height:42px;border-radius:10px;border:1px solid var(--b);background:var(--s2);font-size:1.2rem;display:flex;align-items:center;justify-content:center}
 .icons div.sel{border-color:var(--t);background:var(--b)}
-.cmp{display:grid;grid-template-columns:20px 1fr 1fr 70px;gap:6px;align-items:center}
+.cmp{display:grid;grid-template-columns:20px 1fr 1fr;gap:6px;align-items:center}
 .cmp input,.cmp select{width:100%;padding:9px 8px;border-radius:10px;border:1px solid var(--b);background:var(--s2);font-size:.85rem;color:var(--t)}
 details{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
 summary{font-size:.88rem;font-weight:600;cursor:pointer}
@@ -104,7 +110,7 @@ summary{font-size:.88rem;font-weight:600;cursor:pointer}
 </head>
 <body>
 <div id="login" class="hidden"><div class="lc">
-  <div style="font-size:1.25rem;font-weight:800">Bora Comprar</div>
+  <div style="font-size:1.25rem;font-weight:800">My Market</div>
   <div class="muted">Digite a senha para desbloquear neste aparelho</div>
   <input id="pinInput" type="password" class="in" style="text-align:center;letter-spacing:.15em" placeholder="••••" onkeydown="if(event.key==='Enter')submitLogin()" />
   <div id="loginErr" class="muted hidden" style="color:var(--d);font-weight:600">Senha incorreta.</div>
@@ -115,10 +121,10 @@ summary{font-size:.88rem;font-weight:600;cursor:pointer}
   <header>
     <div class="hl">
       <button id="btnBack" class="ib hidden" data-a="back">←</button>
-      <img class="logo" src="https://lh3.googleusercontent.com/d/1MuC92zVngc48Wm9XzqRWErIS8CyT3fLp=s512" alt="" onerror="this.style.display='none'" />
-      <div class="ttl" id="title">Bora Comprar</div>
+      <img class="logo" data-icon alt="" onerror="this.style.display='none'" />
+      <div class="ttl" id="title">My Market</div>
     </div>
-    <div class="hl"><span id="dot" class="dot"></span><button id="btnAdd" class="ib hidden" data-a="itemNew">＋</button></div>
+    <div class="hl"><span id="dot" class="dot" onclick="poll(true)" title="Toque para atualizar agora"></span><button id="btnAdd" class="ib hidden" data-a="itemNew">＋</button></div>
   </header>
   <div id="err" class="hidden" style="margin:0 20px 8px;padding:10px 12px;border-radius:12px;background:#FEF2F2;color:#B91C1C;font-size:.78rem;font-weight:600"></div>
   <main>
@@ -171,7 +177,7 @@ const API_URL="https://script.google.com/macros/s/AKfycbzddiqdc9b09qrSSOaIL4LxuW
 const PK="bora_comprar_auth_pin",SK="bora_comprar_state_v3";
 const ICONS={package:'📦',apple:'🍎',beef:'🥩',cheese:'🧀',croissant:'🥐',cup:'🥤',flame:'🌶️',can:'🥫',wheat:'🌾',candy:'🍫',snowflake:'❄️',sparkles:'✨',heart:'🧴',box:'🛍️',cart:'🛒',leaf:'🥬',fish:'🐟',coffee:'☕',baby:'🍼',pet:'🐾',pill:'💊',home:'🏠',star:'⭐',tag:'🏷️'};
 const VARIANTS={feijao:[['Feijão','Não Perecíveis'],['Feijão Preto','Não Perecíveis'],['Feijão Vermelho','Não Perecíveis'],['Feijão Carioca (Marrom)','Não Perecíveis']],arroz:[['Arroz','Não Perecíveis'],['Arroz japa','Não Perecíveis'],['Arroz Integral','Não Perecíveis']],queijo:[['Queijo','Frios'],['Parmesão','Frios'],['Requeijão','Frios'],['Creme de Ricota','Frios']]};
-const S={cats:[],items:{},view:'home',mode:null,cat:null,edit:false,all:false,q:'',hist:null,ai:null,ed:null,cmp:[{p:'',q:'',u:'g'},{p:'',q:'',u:'g'}],market:'',parts:{}};
+const S={cats:[],items:{},view:'home',mode:null,cat:null,edit:false,all:false,q:'',hist:null,ai:null,ed:null,cmp:[{p:'',q:''},{p:'',q:''}],cmpU:'w',market:'',parts:{}};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
@@ -190,16 +196,50 @@ const MI='type="text" inputmode="numeric"';
 function mask(el){const d0=Number(el.dataset.dec);let d=el.value.replace(/\D/g,'').replace(/^0+/,'');if(!d){el.value='';return}if(!d0){el.value=d;return}d=d.padStart(d0+1,'0');el.value=d.slice(0,-d0).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+','+d.slice(-d0)}
 
 /* ---------- REDE / SINCRONIZAÇÃO ---------- */
-let pend=0,chain=Promise.resolve(),ver='',tick=0;
-const dot=on=>$('dot').classList.toggle('sy',on);
+let pend=0,chain=Promise.resolve(),ver='',tick=0,wc=0,flushP=null,ftimer=null;
+const DK='bora_comprar_dirty_v1';
+const dirty=new Map(Object.entries((()=>{try{return JSON.parse(localStorage.getItem(DK)||'{}')}catch(e){return{}}})()));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const updDot=()=>$('dot').classList.toggle('sy',dirty.size>0||pend>0||!!flushP);
 function persist(){localStorage.setItem(SK,JSON.stringify({cats:S.cats,items:S.items}))}
-function post(payload){
-  pend++;dot(1);persist();
-  const p=chain=chain.then(()=>fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,pin:pin()})}).then(r=>r.json()).then(r=>{if(r.authError)logout();return r}).catch(()=>({ok:false}))).then(r=>{if(--pend===0)dot(0);return r});
-  return p;
+const persistDirty=()=>localStorage.setItem(DK,JSON.stringify(Object.fromEntries(dirty)));
+async function rawPost(payload){
+  try{
+    const r=await(await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,pin:pin()})})).json();
+    if(r.authError){logout();return{ok:false,auth:true}}
+    return r;
+  }catch(e){return{ok:false,net:true}}
 }
-async function get(action){
-  const r=await fetch(`${API_URL}?action=${action}&pin=${encodeURIComponent(pin())}`);
+// Salvamento em lote: junta várias alterações, envia de uma vez e repete até o servidor confirmar.
+// As pendências ficam guardadas no aparelho, então nada se perde se o app fechar.
+function saveI(i){dirty.set(i.category+'|'+i.name,{...i});wc++;persist();persistDirty();clearTimeout(ftimer);ftimer=setTimeout(flush,600);updDot()}
+function flush(fromPost){
+  clearTimeout(ftimer);
+  if(flushP)return flushP;
+  if(pend>0&&!fromPost){ftimer=setTimeout(flush,800);return Promise.resolve()}
+  flushP=(async()=>{
+    let fails=0;
+    while(dirty.size){
+      const batch=[...dirty.entries()];
+      const r=await rawPost({action:'saveItems',items:batch.map(b=>b[1])});
+      if(r.auth)break;
+      if(r.ok){fails=0;batch.forEach(([k,v])=>{if(dirty.get(k)===v)dirty.delete(k)});persistDirty();wc++}
+      else{fails++;showErr('Sem conseguir salvar na planilha… tentando de novo ('+dirty.size+' alterações pendentes)');await sleep(Math.min(1500*fails,8000))}
+    }
+  })().finally(()=>{flushP=null;updDot();if(!dirty.size){showErr('');poll()}});
+  return flushP;
+}
+function post(payload,noRetry){
+  pend++;updDot();persist();
+  return chain=chain.then(async()=>{
+    await flush(true);
+    let r;
+    for(let a=0;a<4;a++){r=await rawPost(payload);if(r.ok||r.auth||!r.net||noRetry)break;await sleep(1500*(a+1))}
+    return r;
+  }).then(r=>{pend--;wc++;updDot();return r});
+}
+async function get(action,extra=''){
+  const r=await fetch(`${API_URL}?action=${action}&pin=${encodeURIComponent(pin())}${extra}`);
   let j;try{j=await r.json()}catch(e){throw new Error('resposta inválida do servidor')}
   if(j.authError){logout();throw 0}
   if(!j.ok)throw new Error(j.error||'erro');
@@ -219,17 +259,18 @@ async function submitLogin(){
   b.textContent='Entrar';b.disabled=false;
 }
 function apply(d){S.cats=(d.categories||[]);S.items=d.itemsByCategory||{};persist();render()}
-const typing=()=>['INPUT','SELECT','TEXTAREA'].includes((document.activeElement||{}).tagName)||!$('modal').classList.contains('hidden');
+let editing=false; // true só enquanto você digita (não trava a sincronização por foco esquecido)
+const typing=()=>editing||!$('modal').classList.contains('hidden');
+document.addEventListener('focusout',()=>{editing=false});
 async function poll(force){
-  if(!pin()||document.hidden||pend||(!force&&typing()))return;
-  let v=null,old=false;
-  try{v=(await get('version')).v}catch(e){if(e===0)return;old=true}
-  if(!old&&!force&&v===ver){showErr('');return}
+  if(!pin()||document.hidden||pend||flushP||dirty.size||(!force&&typing()))return;
+  const w0=wc;
   try{
-    const d=await get('getData');
-    if(pend||(!force&&typing()))return;
-    apply(d.data);ver=v;
-    showErr(old?'⚠️ Servidor desatualizado: refaça a implantação do Apps Script (Nova versão). Sincronização rápida e novos recursos não vão funcionar.':'');
+    // 1 chamada só: o servidor devolve os dados apenas se algo mudou
+    const r=await get('sync',(force?'&fresh=1&since=':'&since='+encodeURIComponent(ver)));
+    if(wc!==w0||pend||flushP||dirty.size||(!force&&typing()))return;
+    if(r.data){apply(r.data);ver=r.v}
+    showErr('');
   }catch(e){if(e!==0)showErr('Sem conexão com a planilha: '+(e.message||e))}
 }
 // no mercado: a cada 3s; fora dele: a cada ~15s
@@ -254,7 +295,7 @@ function render(){
   ['home','cats','items','hist'].forEach(v=>$('v_'+v).classList.toggle('hidden',S.view!==v));
   $('btnBack').classList.toggle('hidden',S.view==='home');
   $('btnAdd').classList.toggle('hidden',S.view!=='items');
-  $('title').textContent={home:'Bora Comprar',cats:S.mode==='plan'?'Colocar na lista':'Comprar',items:S.cat,hist:'Histórico'}[S.view];
+  $('title').textContent={home:'My Market',cats:S.mode==='plan'?'Colocar na lista':'Comprar',items:S.cat,hist:'Histórico'}[S.view];
   $('finBar').classList.toggle('hidden',!(S.mode==='buy'&&S.view==='cats'));
   const buy=S.mode==='buy';
   $('sumTop').classList.toggle('hidden',!buy);$('sumCat').classList.toggle('hidden',!buy);
@@ -328,11 +369,14 @@ function priceInfo(name){
 }
 
 /* ---------- COMPARADOR ---------- */
-const CD={g:0,kg:3,ml:0,L:3,un:0};
-const F={g:1,kg:1000,ml:1,L:1000,un:1},FAM={g:'w',kg:'w',ml:'v',L:'v',un:'u'},LBL={w:'kg',v:'L',u:'un'};
+// Unidade única para toda a comparação. Peso e volume: digite em g/ml e o campo mostra kg/L (135 -> 0,135; 1200 -> 1,200)
+const CU={w:{l:'Peso',u:'kg',d:3,s:'gramas'},v:{l:'Volume',u:'L',d:3,s:'ml'},u:{l:'Unidades',u:'un',d:0}};
 function cmpModal(){
+  const U=CU[S.cmpU];
   modal(`<div class="mt">⚖️ Comparar preço × quantidade<button class="ib" data-a="close">✕</button></div>
-  <div id="cmpRows" class="list">${S.cmp.map((r,k)=>`<div class="cmp"><b>${'ABCD'[k]}</b><input ${MI} data-dec="2" placeholder="Preço R$" value="${r.p}" data-f="cmp" data-k="p" data-i="${k}"><input ${MI} data-dec="${CD[r.u]}" placeholder="Quantidade" value="${r.q}" data-f="cmp" data-k="q" data-i="${k}"><select data-f="cmp" data-k="u" data-i="${k}">${Object.keys(F).map(u=>`<option ${u===r.u?'selected':''}>${u}</option>`).join('')}</select></div>`).join('')}</div>
+  <div class="chips" style="margin:0">${Object.entries(CU).map(([k,x])=>`<button class="chip ${S.cmpU===k?'on':''}" data-a="cmpU" data-u="${k}">${x.l}</button>`).join('')}</div>
+  <div class="muted">${S.cmpU==='u'?'Digite a quantidade de unidades.':`Digite só os números em ${U.s}: 135 vira 0,135 ${U.u} · 1200 vira 1,200 ${U.u}.`}</div>
+  <div id="cmpRows" class="list">${S.cmp.map((r,k)=>`<div class="cmp"><b>${'ABCD'[k]}</b><input ${MI} data-dec="2" placeholder="Preço R$" value="${r.p}" data-f="cmp" data-k="p" data-i="${k}"><input ${MI} data-dec="${U.d}" placeholder="Qtd (${U.u})" value="${r.q}" data-f="cmp" data-k="q" data-i="${k}"></div>`).join('')}</div>
   ${S.cmp.length<4?'<button class="btn sec" data-a="cmpAdd">＋ Mais uma opção</button>':''}
   <div id="cmpRes" class="list"></div>
   <div class="cap" style="margin:6px 0 0">Preço anterior de um produto</div>
@@ -341,12 +385,11 @@ function cmpModal(){
   calcCmp();
 }
 function calcCmp(){
-  const rows=S.cmp.map((r,k)=>{const p=num(r.p),q=num(r.q);if(!(p>0&&q>0))return null;const f=FAM[r.u];return{k,f,v:p/(q*F[r.u])*(f==='u'?1:1000)}});
-  const ok=rows.filter(Boolean),el=$('cmpRes');
+  const U=CU[S.cmpU],el=$('cmpRes');
+  const ok=S.cmp.map((r,k)=>{const p=num(r.p),q=num(r.q);return p>0&&q>0?{k,v:p/q}:null}).filter(Boolean);
   if(ok.length<2){el.innerHTML='<div class="muted">Preencha preço e quantidade de pelo menos duas opções.</div>';return}
-  if(new Set(ok.map(x=>x.f)).size>1){el.innerHTML='<div class="muted" style="color:var(--d)">Unidades incompatíveis (ex: g com ml).</div>';return}
   const min=Math.min(...ok.map(x=>x.v));
-  el.innerHTML=ok.map(r=>`<div class="rv ${r.v===min?'best':''}"><span>Opção ${'ABCD'[r.k]}</span><b>${brl(r.v)}/${LBL[r.f]} ${r.v===min?'🏆 melhor':'(+'+Math.round((r.v/min-1)*100)+'%)'}</b></div>`).join('');
+  el.innerHTML=ok.map(r=>`<div class="rv ${r.v===min?'best':''}"><span>Opção ${'ABCD'[r.k]}</span><b>${brl(r.v)}/${U.u} ${r.v===min?'🏆 melhor':'(+'+Math.round((r.v/min-1)*100)+'%)'}</b></div>`).join('');
 }
 
 /* ---------- MODAIS ---------- */
@@ -396,7 +439,6 @@ function finModal(){
 }
 
 /* ---------- AÇÕES ---------- */
-const saveI=i=>post({action:'saveItemState',...i});
 const A={
   close:closeModal,
   mode(b){history.pushState({},'');S.mode=b.dataset.m;S.view='cats';S.q='';$('q').value='';S.edit=false;S.all=false;if(S.mode==='buy')loadHist();render()},
@@ -451,19 +493,19 @@ const A={
   async price(b){const i=ctx(b);if(!S.hist)await loadHist();modal(`<div class="mt">🕘 ${esc(i.name)}<button class="ib" data-a="close">✕</button></div><div class="list">${priceInfo(i.name)}</div>`)},
   hist(){history.pushState({},'');S.view='hist';S.mode=null;rHist();render()},
   cmp(){cmpModal();if(!S.hist)loadHist()},
-  cmpAdd(){S.cmp.push({p:'',q:'',u:S.cmp[0].u});cmpModal()},
+  cmpAdd(){S.cmp.push({p:'',q:''});cmpModal()},
+  cmpU(b){S.cmpU=b.dataset.u;S.cmp.forEach(r=>r.q='');cmpModal()},
   fin(){finModal()},
   ign2(b){const i=ctx(b);i.ignore=!i.ignore;saveI(i);S.market=$('market').value;finModal()},
   rm2(b){A.rm(b);S.market=$('market').value;finModal()},
   finOk(){
     const market=$('market').value.trim()||'Mercado';S.market='';S.parts={};
-    const snap=all().map(i=>({...i}));
     all().forEach(i=>{
       if(i.inCart){i.listQty=0;i.ifCheap=false}else if(!i.ignore){i.listQty=0;i.ifCheap=false}
       Object.assign(i,{inCart:false,cartQty:0,unitPrice:0,ignore:false});
     });
     closeModal();render();
-    post({action:'finalizePurchase',market,items:snap}).then(()=>{S.hist=null;loadHist()});
+    post({action:'finalizePurchase',market},true).then(r=>{if(!r||!r.ok)showErr('Não foi possível finalizar a compra no servidor. Os dados foram recarregados: confira e tente de novo.');S.hist=null;loadHist();poll(true)});
   },
   sum(b){sumModal(ctx(b))},
   smAdd(){const e=$('smW'),v=num(e.value);if(!(v>0))return;S.sm.parts.push(v);e.value='';smRender();e.focus()},
@@ -481,8 +523,7 @@ function mv(n,d){
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&A[b.dataset.a])A[b.dataset.a](b,e)});
 document.addEventListener('change',e=>{
-  const f=e.target.dataset.f;if(!f)return;
-  if(f==='cmp'){if(e.target.dataset.k==='u'){const x=S.cmp[e.target.dataset.i],o=num(x.q);x.u=e.target.value;x.q=fnum(o,CD[x.u]);cmpModal()}return}
+  editing=false;const f=e.target.dataset.f;if(!f||f==='cmp')return;
   const i=ctx(e.target);if(!i)return;
   if(f==='plan'){i.listQty=Math.max(0,parseFloat(e.target.value||0));saveI(i);sums()}
   else{
@@ -493,6 +534,7 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{
   const t=e.target;
+  if(t.id!=='q')editing=true;
   if(t.dataset.dec!==undefined)mask(t);
   if(t.id==='q'){S.q=t.value;rBody()}
   else if(t.dataset.f==='cmp'){S.cmp[t.dataset.i][t.dataset.k]=t.value;calcCmp()}
@@ -563,10 +605,11 @@ function aiConfirm(){
 
 /* ---------- INÍCIO ---------- */
 (function init(){
+  document.querySelectorAll('img[data-icon]').forEach(i=>i.src=ICON(512));
   if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
   try{const s=JSON.parse(localStorage.getItem(SK)||'null');if(s){S.cats=s.cats;S.items=s.items}}catch(e){}
   render();
-  if(pin())poll(true);else showLogin(false);
+  if(dirty.size)flush();if(pin())poll(true);else showLogin(false);
 })();
 </script>
 </body>
