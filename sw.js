@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bora-comprar-v1';
+const CACHE_NAME = 'bora-comprar-v2';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {
@@ -7,14 +7,14 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET' || event.request.url.includes('script.google.com')) {
-    return;
-  }
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
+  if (event.request.method !== 'GET' || event.request.url.includes('script.google.com')) return;
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
